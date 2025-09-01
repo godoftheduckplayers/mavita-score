@@ -1,4 +1,4 @@
-package com.mavita.score.controller;
+package com.mavita.score.controller.score;
 
 import com.mavita.score.service.HealthPointerScoreService;
 import com.mavita.score.service.HealthScoreService;
@@ -52,7 +52,7 @@ import org.springframework.web.bind.annotation.*;
  * @since 1.0.0
  */
 @RestController
-@RequestMapping("api/health-score")
+@RequestMapping("/api/scores")
 @RequiredArgsConstructor
 public class ScoreController {
 
@@ -84,7 +84,9 @@ public class ScoreController {
    * @return a list of {@link IndicatorScoreDTO} in the shape expected by the frontend.
    */
   @GetMapping
-  public List<IndicatorScoreDTO> getCurrentScore(@RequestParam String query) {
+  public List<IndicatorScoreDTO> getCurrentScore(
+      @RequestHeader("Authorization") String authorization, @RequestParam String query) {
+    System.out.println(authorization);
     if ("EMPTY".equals(query)) {
       return List.of();
     }
