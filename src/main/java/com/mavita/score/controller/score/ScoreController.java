@@ -2,6 +2,7 @@ package com.mavita.score.controller.score;
 
 import com.mavita.score.service.HealthPointerScoreService;
 import com.mavita.score.service.HealthScoreService;
+import com.mavita.score.service.health.dto.HealthDTO;
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
 import com.mavita.score.service.score.pointer.dto.IndicatorScoreDTO;
 import com.mavita.score.utils.JwtUtils;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * REST controller that exposes endpoints for calculating a user's health score.
  *
- * <p>This controller receives validated input data in the form of a {@link HealthDataDTO}, and
+ * <p>This controller receives validated input data in the form of a {@link HealthDTO}, and
  * delegates the score calculation to the {@link HealthScoreService}. The result is returned as a
  * {@link HealthScoreSummaryDTO}.
  *
