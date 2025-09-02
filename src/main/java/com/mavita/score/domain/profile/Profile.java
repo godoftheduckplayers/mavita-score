@@ -1,5 +1,6 @@
 package com.mavita.score.domain.profile;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -33,7 +34,7 @@ public class Profile {
   @Indexed(unique = true)
   private UUID userUuid;
 
-  private String birthDate;
+  private LocalDate birthDate;
 
   private Double weight;
 

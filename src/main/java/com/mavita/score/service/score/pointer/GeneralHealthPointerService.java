@@ -1,20 +1,34 @@
 package com.mavita.score.service.score.pointer;
 
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
-import com.mavita.score.service.score.pointer.dto.PointerResultDTO;
-import com.mavita.score.service.score.pointer.dto.PointerScoreDTO;
+import com.mavita.score.service.score.pointer.dto.IndicatorScoreDTO;
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * Service responsible for calculating the general health pointer score based on individual health
- * domain scores.
+ * Builds the "General Health" indicator from atomic domain scores contained in {@link
+ * HealthScoreSummaryDTO}.
  *
- * <p>This service aggregates relevant health scores such as age, BMI, health perception, and
- * chronic condition history to produce an overall general health indicator score.
+ * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
  *
- * <p>The calculated score is then set into a PointerResultDTO for further use.
+ * <ul>
+ *   <li>Age score
+ *   <li>BMI score
+ *   <li>Health feeling score
+ *   <li>Chronic conditions score
+ *   <li>Parental conditions score
+ * </ul>
  *
- * @author Leandro Marques
+ * <p><strong>Ranges</strong> (proportional to max 62):
+ *
+ * <ul>
+ *   <li>0–12: Ótimo
+ *   <li>13–37: Atenção
+ *   <li>38–62: Crítico
+ * </ul>
+ *
  * @since 1.0.0
  */
 @Service
@@ -23,28 +37,33 @@ public class GeneralHealthPointerService implements PointerService {
   private static final int MAX_SCORE = 62;
 
   @Override
-  public PointerResultDTO calculate(
-      HealthScoreSummaryDTO healthScoreSummaryDTO, PointerResultDTO pointerResultDTO) {
+  public IndicatorScoreDTO calculate(HealthScoreSummaryDTO summary) {
+    Objects.requireNonNull(summary, "healthScoreSummaryDTO must not be null");
 
-    int totalScore =
-        healthScoreSummaryDTO.getAgeScore()
-            + healthScoreSummaryDTO.getBmiScore()
-            + healthScoreSummaryDTO.getHealthFeelingScore()
-            + healthScoreSummaryDTO.getChronicConditionScore()
-            + healthScoreSummaryDTO.getParentalConditionsScore();
+    int total =
+        summary.getAgeScore()
+            + summary.getBmiScore()
+            + summary.getHealthFeelingScore()
+            + summary.getChronicConditionScore()
+            + summary.getParentalConditionsScore();
 
-    totalScore = getTotalScore(totalScore);
+    if (total > MAX_SCORE) total = MAX_SCORE;
+    if (total < 0) total = 0;
 
-    PointerScoreDTO generalHealthPointerScore = new PointerScoreDTO(totalScore, MAX_SCORE);
-    pointerResultDTO.setGeneralHealthPointerScore(generalHealthPointerScore);
+    // Ranges scaled to max 62 (~20% and ~60% thresholds)
+    List<IndicatorScoreDTO.Range> ranges =
+        List.of(
+            new IndicatorScoreDTO.Range(0, 12, "#5CB85C", "Ótimo"),
+            new IndicatorScoreDTO.Range(13, 37, "#F0AD4E", "Atenção"),
+            new IndicatorScoreDTO.Range(38, 62, "#D9534F", "Crítico"));
 
-    return pointerResultDTO;
-  }
-
-  private int getTotalScore(int totalScore) {
-    if (totalScore > MAX_SCORE) {
-      totalScore = MAX_SCORE;
-    }
-    return totalScore;
+    return new IndicatorScoreDTO(
+        "general-health",
+        "Saúde Geral",
+        /* primary */ true,
+        total,
+        MAX_SCORE,
+        ranges,
+        Instant.now());
   }
 }

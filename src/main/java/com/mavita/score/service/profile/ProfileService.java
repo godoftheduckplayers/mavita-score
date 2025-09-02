@@ -3,6 +3,7 @@ package com.mavita.score.service.profile;
 import com.mavita.score.domain.profile.Profile;
 import com.mavita.score.repository.profile.ProfileRepository;
 import com.mavita.score.service.profile.dto.ProfileDTO;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileService {
 
   private final ProfileRepository profileRepository;
+
+  /**
+   * Finds a profile by the user's UUID.
+   *
+   * @param userUuid user's UUID
+   * @return an Optional containing the DTO if found, otherwise empty
+   */
+  @Transactional(readOnly = true)
+  public Optional<ProfileDTO> findById(UUID userUuid) {
+    return profileRepository.findByUserUuid(userUuid).map(this::toDTO);
+  }
 
   /**
    * Creates or updates the profile (upsert) associated to the given {@code userUuid}.

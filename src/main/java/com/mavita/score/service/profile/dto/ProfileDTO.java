@@ -1,5 +1,6 @@
 package com.mavita.score.service.profile.dto;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -24,7 +25,7 @@ import java.util.UUID;
  */
 public record ProfileDTO(
     UUID userUuid,
-    String birthDate,
+    LocalDate birthDate,
     Double weight,
     Double height,
     String sex,

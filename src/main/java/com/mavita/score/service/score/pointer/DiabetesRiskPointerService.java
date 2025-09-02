@@ -1,28 +1,34 @@
 package com.mavita.score.service.score.pointer;
 
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
-import com.mavita.score.service.score.pointer.dto.PointerResultDTO;
-import com.mavita.score.service.score.pointer.dto.PointerScoreDTO;
+import com.mavita.score.service.score.pointer.dto.IndicatorScoreDTO;
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * Service responsible for calculating the diabetes risk pointer score based on individual
- * diabetes-related domain scores.
+ * Builds the "Diabetes Risk" indicator from atomic domain scores contained in {@link
+ * HealthScoreSummaryDTO}.
  *
- * <p>The score is calculated by summing BMI, diabetes symptoms, poor sleep, personal diabetes
- * history, and family diabetes history scores, capped at a maximum of 22 points.
- *
- * <p>Score interpretation (0–22):
+ * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
  *
  * <ul>
- *   <li>0–6: Low risk
- *   <li>7–14: Moderate risk
- *   <li>15–22: High risk
+ *   <li>BMI score
+ *   <li>Diabetes symptoms score
+ *   <li>Sleep difficulty score
+ *   <li>Personal chronic conditions score
+ *   <li>Parental conditions score
  * </ul>
  *
- * The resulting score is set in the PointerResultDTO.
+ * <p><strong>Ranges</strong> (0–22):
  *
- * @author Leandro Marques
+ * <ul>
+ *   <li>0–6: Baixo
+ *   <li>7–14: Moderado
+ *   <li>15–22: Alto
+ * </ul>
+ *
  * @since 1.0.0
  */
 @Service
@@ -31,28 +37,32 @@ public class DiabetesRiskPointerService implements PointerService {
   private static final int MAX_SCORE = 22;
 
   @Override
-  public PointerResultDTO calculate(
-      HealthScoreSummaryDTO healthScoreSummaryDTO, PointerResultDTO pointerResultDTO) {
+  public IndicatorScoreDTO calculate(HealthScoreSummaryDTO summary) {
+    Objects.requireNonNull(summary, "healthScoreSummaryDTO must not be null");
 
-    int totalScore =
-        healthScoreSummaryDTO.getBmiScore()
-            + healthScoreSummaryDTO.getDiabetesSymptomLevelScore()
-            + healthScoreSummaryDTO.getSleepDifficultyScore()
-            + healthScoreSummaryDTO.getChronicConditionScore()
-            + healthScoreSummaryDTO.getParentalConditionsScore();
+    int total =
+        summary.getBmiScore()
+            + summary.getDiabetesSymptomLevelScore()
+            + summary.getSleepDifficultyScore()
+            + summary.getChronicConditionScore()
+            + summary.getParentalConditionsScore();
 
-    totalScore = getTotalScore(totalScore);
+    if (total > MAX_SCORE) total = MAX_SCORE;
+    if (total < 0) total = 0;
 
-    PointerScoreDTO diabetesRiskPointerScore = new PointerScoreDTO(totalScore, MAX_SCORE);
-    pointerResultDTO.setDiabetesRiskPointerScore(diabetesRiskPointerScore);
+    List<IndicatorScoreDTO.Range> ranges =
+        List.of(
+            new IndicatorScoreDTO.Range(0, 6, "#5CB85C", "Baixo"),
+            new IndicatorScoreDTO.Range(7, 14, "#F0AD4E", "Moderado"),
+            new IndicatorScoreDTO.Range(15, 22, "#D9534F", "Alto"));
 
-    return pointerResultDTO;
-  }
-
-  private int getTotalScore(int totalScore) {
-    if (totalScore > MAX_SCORE) {
-      totalScore = MAX_SCORE;
-    }
-    return totalScore;
+    return new IndicatorScoreDTO(
+        "diabetes-risk",
+        "Risco de Diabetes",
+        /* primary */ false,
+        total,
+        MAX_SCORE,
+        ranges,
+        Instant.now());
   }
 }

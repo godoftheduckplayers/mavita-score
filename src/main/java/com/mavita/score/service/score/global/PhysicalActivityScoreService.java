@@ -1,21 +1,26 @@
 package com.mavita.score.service.score.global;
 
-import com.mavita.score.service.score.global.dto.HealthDataDTO;
+import com.mavita.score.service.health.dto.HealthDTO;
+import com.mavita.score.service.profile.dto.ProfileDTO;
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * ScoreService that calculates a score based on the user's physical activity level.
+ * ScoreService that calculates a score based on the user's physical activity level reported in
+ * {@link HealthDTO}.
  *
  * <p>Scoring:
  *
  * <ul>
- *   <li>ALWAYS - 0 points
- *   <li>OFTEN - 2 points
- *   <li>RARELY - 4 points
+ *   <li>{@code ALWAYS} &rarr; 0 points
+ *   <li>{@code OFTEN} &rarr; 2 points
+ *   <li>{@code RARELY} &rarr; 4 points
  * </ul>
  *
- * @author Leandro Marques
+ * <p>If the value is {@code null}, a neutral score (0) is applied. The result is written into
+ * {@link HealthScoreSummaryDTO#setPhysicalActivityScore(int)}.
+ *
  * @since 1.0.0
  */
 @Service
@@ -23,16 +28,25 @@ public class PhysicalActivityScoreService implements ScoreService {
 
   @Override
   public void calculateScore(
-      HealthDataDTO healthDataDTO, HealthScoreSummaryDTO healthScoreSummaryDTO) {
-    int score = getScore(healthDataDTO);
+      ProfileDTO profileDTO, HealthDTO healthDTO, HealthScoreSummaryDTO healthScoreSummaryDTO) {
+
+    Objects.requireNonNull(profileDTO, "profileDTO must not be null");
+    Objects.requireNonNull(healthDTO, "healthDTO must not be null");
+    Objects.requireNonNull(healthScoreSummaryDTO, "healthScoreSummaryDTO must not be null");
+
+    final int score = toPhysicalActivityScore(healthDTO);
     healthScoreSummaryDTO.setPhysicalActivityScore(score);
   }
 
-  private int getScore(HealthDataDTO healthDataDTO) {
-    return switch (healthDataDTO.physicalActivityLevel()) {
-      case ALWAYS -> 0;
-      case OFTEN -> 2;
-      case RARELY -> 4;
+  private int toPhysicalActivityScore(HealthDTO healthDTO) {
+    final var level = healthDTO.physicalActivityLevel();
+    if (level == null) return 0;
+
+    return switch (level) {
+      case "ALWAYS" -> 0;
+      case "OFTEN" -> 2;
+      case "RARELY" -> 4;
+      default -> throw new IllegalStateException("Unexpected value: " + level);
     };
   }
 }

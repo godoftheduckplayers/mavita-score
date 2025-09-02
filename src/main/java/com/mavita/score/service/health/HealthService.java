@@ -5,6 +5,7 @@ import com.mavita.score.domain.health.PersonalFamilyHistory;
 import com.mavita.score.repository.health.HealthRepository;
 import com.mavita.score.service.health.dto.HealthDTO;
 import com.mavita.score.service.health.dto.PersonalFamilyHistoryDTO;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class HealthService {
 
   private final HealthRepository healthRepository;
+
+  /**
+   * Finds the health data by the user's UUID.
+   *
+   * @param userUuid user's UUID
+   * @return an Optional containing the DTO if found, otherwise empty
+   */
+  @Transactional(readOnly = true)
+  public Optional<HealthDTO> findById(UUID userUuid) {
+    return healthRepository.findByUserUuid(userUuid).map(this::toDTO);
+  }
 
   /**
    * Creates or updates (idempotent upsert) the health data associated with {@code userUuid}.

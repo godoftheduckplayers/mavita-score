@@ -1,28 +1,33 @@
 package com.mavita.score.service.score.pointer;
 
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
-import com.mavita.score.service.score.pointer.dto.PointerResultDTO;
-import com.mavita.score.service.score.pointer.dto.PointerScoreDTO;
+import com.mavita.score.service.score.pointer.dto.IndicatorScoreDTO;
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * Service responsible for calculating the sleep health pointer score based on individual
- * sleep-related domain scores.
+ * Builds the "Sleep Health" indicator from atomic sleep-related scores contained in {@link
+ * HealthScoreSummaryDTO}.
  *
- * <p>The score is calculated by summing scores for sleep hours, difficulty sleeping, night
- * awakenings, and mood upon waking, capped at a maximum of 16 points.
- *
- * <p>Score interpretation (0–16):
+ * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
  *
  * <ul>
- *   <li>0–5: Good sleep
- *   <li>6–10: Regular sleep
- *   <li>11–16: Poor sleep
+ *   <li>Sleep hours score
+ *   <li>Sleep difficulty score
+ *   <li>Night awakening frequency score
+ *   <li>Wake-up mood score
  * </ul>
  *
- * The resulting score is set in the PointerResultDTO.
+ * <p><strong>Ranges</strong> (0–16):
  *
- * @author Leandro Marques
+ * <ul>
+ *   <li>0–5: Bom
+ *   <li>6–10: Regular
+ *   <li>11–16: Ruim
+ * </ul>
+ *
  * @since 1.0.0
  */
 @Service
@@ -31,27 +36,31 @@ public class SleepHealthPointerService implements PointerService {
   private static final int MAX_SCORE = 16;
 
   @Override
-  public PointerResultDTO calculate(
-      HealthScoreSummaryDTO healthScoreSummaryDTO, PointerResultDTO pointerResultDTO) {
+  public IndicatorScoreDTO calculate(HealthScoreSummaryDTO summary) {
+    Objects.requireNonNull(summary, "healthScoreSummaryDTO must not be null");
 
-    int totalScore =
-        healthScoreSummaryDTO.getSleepHoursScore()
-            + healthScoreSummaryDTO.getSleepDifficultyScore()
-            + healthScoreSummaryDTO.getNightAwakeningFrequencyScore()
-            + healthScoreSummaryDTO.getWakeUpMoodScore();
+    int total =
+        summary.getSleepHoursScore()
+            + summary.getSleepDifficultyScore()
+            + summary.getNightAwakeningFrequencyScore()
+            + summary.getWakeUpMoodScore();
 
-    totalScore = getTotalScore(totalScore);
+    if (total > MAX_SCORE) total = MAX_SCORE;
+    if (total < 0) total = 0;
 
-    PointerScoreDTO sleepHealthPointerScore = new PointerScoreDTO(totalScore, MAX_SCORE);
-    pointerResultDTO.setSleepHealthPointerScore(sleepHealthPointerScore);
+    List<IndicatorScoreDTO.Range> ranges =
+        List.of(
+            new IndicatorScoreDTO.Range(0, 5, "#5CB85C", "Bom"),
+            new IndicatorScoreDTO.Range(6, 10, "#F0AD4E", "Regular"),
+            new IndicatorScoreDTO.Range(11, 16, "#D9534F", "Ruim"));
 
-    return pointerResultDTO;
-  }
-
-  private int getTotalScore(int totalScore) {
-    if (totalScore > MAX_SCORE) {
-      totalScore = MAX_SCORE;
-    }
-    return totalScore;
+    return new IndicatorScoreDTO(
+        "sleep-health",
+        "Saúde do Sono",
+        /* primary */ false,
+        total,
+        MAX_SCORE,
+        ranges,
+        Instant.now());
   }
 }

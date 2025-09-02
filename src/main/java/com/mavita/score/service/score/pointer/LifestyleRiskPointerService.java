@@ -1,28 +1,34 @@
 package com.mavita.score.service.score.pointer;
 
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
-import com.mavita.score.service.score.pointer.dto.PointerResultDTO;
-import com.mavita.score.service.score.pointer.dto.PointerScoreDTO;
+import com.mavita.score.service.score.pointer.dto.IndicatorScoreDTO;
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * Service responsible for calculating the lifestyle risk pointer score based on individual
- * lifestyle-related domain scores.
+ * Builds the "Lifestyle Risk" indicator from atomic lifestyle-related domain scores contained in
+ * {@link HealthScoreSummaryDTO}.
  *
- * <p>The score is calculated by summing smoking, alcohol consumption, physical activity, diet, and
- * sleep scores, capped at a maximum of 20 points.
- *
- * <p>Score interpretation (0–20):
+ * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
  *
  * <ul>
- *   <li>0–6: Healthy lifestyle
- *   <li>7–13: Moderate risk
- *   <li>14–20: High risk
+ *   <li>Smoking score
+ *   <li>Alcohol consumption score
+ *   <li>Physical activity score
+ *   <li>Diet quality score
+ *   <li>Sleep difficulty score
  * </ul>
  *
- * The resulting score is set in the PointerResultDTO.
+ * <p><strong>Ranges</strong> (0–20):
  *
- * @author Leandro Marques
+ * <ul>
+ *   <li>0–6: Saudável
+ *   <li>7–13: Moderado
+ *   <li>14–20: Alto
+ * </ul>
+ *
  * @since 1.0.0
  */
 @Service
@@ -31,28 +37,32 @@ public class LifestyleRiskPointerService implements PointerService {
   private static final int MAX_SCORE = 20;
 
   @Override
-  public PointerResultDTO calculate(
-      HealthScoreSummaryDTO healthScoreSummaryDTO, PointerResultDTO pointerResultDTO) {
+  public IndicatorScoreDTO calculate(HealthScoreSummaryDTO summary) {
+    Objects.requireNonNull(summary, "healthScoreSummaryDTO must not be null");
 
-    int totalScore =
-        healthScoreSummaryDTO.getSmokingScore()
-            + healthScoreSummaryDTO.getAlcoholConsumptionScore()
-            + healthScoreSummaryDTO.getPhysicalActivityScore()
-            + healthScoreSummaryDTO.getDietScore()
-            + healthScoreSummaryDTO.getSleepDifficultyScore();
+    int total =
+        summary.getSmokingScore()
+            + summary.getAlcoholConsumptionScore()
+            + summary.getPhysicalActivityScore()
+            + summary.getDietScore()
+            + summary.getSleepDifficultyScore();
 
-    totalScore = getTotalScore(totalScore);
+    if (total > MAX_SCORE) total = MAX_SCORE;
+    if (total < 0) total = 0;
 
-    PointerScoreDTO lifestyleRiskPointerScore = new PointerScoreDTO(totalScore, MAX_SCORE);
-    pointerResultDTO.setLifestyleRiskPointerScore(lifestyleRiskPointerScore);
+    List<IndicatorScoreDTO.Range> ranges =
+        List.of(
+            new IndicatorScoreDTO.Range(0, 6, "#5CB85C", "Saudável"),
+            new IndicatorScoreDTO.Range(7, 13, "#F0AD4E", "Moderado"),
+            new IndicatorScoreDTO.Range(14, 20, "#D9534F", "Alto"));
 
-    return pointerResultDTO;
-  }
-
-  private int getTotalScore(int totalScore) {
-    if (totalScore > MAX_SCORE) {
-      totalScore = MAX_SCORE;
-    }
-    return totalScore;
+    return new IndicatorScoreDTO(
+        "lifestyle-risk",
+        "Estilo de Vida",
+        /* primary */ false,
+        total,
+        MAX_SCORE,
+        ranges,
+        Instant.now());
   }
 }

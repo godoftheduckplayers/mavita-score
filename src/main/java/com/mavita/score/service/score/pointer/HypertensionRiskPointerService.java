@@ -1,28 +1,33 @@
 package com.mavita.score.service.score.pointer;
 
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
-import com.mavita.score.service.score.pointer.dto.PointerResultDTO;
-import com.mavita.score.service.score.pointer.dto.PointerScoreDTO;
+import com.mavita.score.service.score.pointer.dto.IndicatorScoreDTO;
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * Service responsible for calculating the hypertension risk pointer score based on individual
- * hypertension-related domain scores.
+ * Builds the "Hypertension Risk" indicator from atomic domain scores contained in {@link
+ * HealthScoreSummaryDTO}.
  *
- * <p>The score is calculated by summing alcohol consumption, headache/dizziness, personal
- * hypertension history, and family hypertension history scores, capped at a maximum of 18 points.
- *
- * <p>Score interpretation (0–18):
+ * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
  *
  * <ul>
- *   <li>0–4: Low risk
- *   <li>5–11: Moderate risk
- *   <li>12–18: High risk
+ *   <li>Alcohol consumption score
+ *   <li>Headache / dizziness score
+ *   <li>Personal chronic conditions score
+ *   <li>Parental conditions score
  * </ul>
  *
- * The resulting score is set in the PointerResultDTO.
+ * <p><strong>Ranges</strong> (0–18):
  *
- * @author Leandro Marques
+ * <ul>
+ *   <li>0–4: Baixo
+ *   <li>5–11: Moderado
+ *   <li>12–18: Alto
+ * </ul>
+ *
  * @since 1.0.0
  */
 @Service
@@ -31,27 +36,31 @@ public class HypertensionRiskPointerService implements PointerService {
   private static final int MAX_SCORE = 18;
 
   @Override
-  public PointerResultDTO calculate(
-      HealthScoreSummaryDTO healthScoreSummaryDTO, PointerResultDTO pointerResultDTO) {
+  public IndicatorScoreDTO calculate(HealthScoreSummaryDTO summary) {
+    Objects.requireNonNull(summary, "healthScoreSummaryDTO must not be null");
 
-    int totalScore =
-        healthScoreSummaryDTO.getAlcoholConsumptionScore()
-            + healthScoreSummaryDTO.getHeadacheDizzinessLevelScore()
-            + healthScoreSummaryDTO.getChronicConditionScore()
-            + healthScoreSummaryDTO.getParentalConditionsScore();
+    int total =
+        summary.getAlcoholConsumptionScore()
+            + summary.getHeadacheDizzinessLevelScore()
+            + summary.getChronicConditionScore()
+            + summary.getParentalConditionsScore();
 
-    totalScore = getTotalScore(totalScore);
+    if (total > MAX_SCORE) total = MAX_SCORE;
+    if (total < 0) total = 0;
 
-    PointerScoreDTO hypertensionRiskPointerScore = new PointerScoreDTO(totalScore, MAX_SCORE);
-    pointerResultDTO.setHypertensionRiskPointerScore(hypertensionRiskPointerScore);
+    List<IndicatorScoreDTO.Range> ranges =
+        List.of(
+            new IndicatorScoreDTO.Range(0, 4, "#5CB85C", "Baixo"),
+            new IndicatorScoreDTO.Range(5, 11, "#F0AD4E", "Moderado"),
+            new IndicatorScoreDTO.Range(12, 18, "#D9534F", "Alto"));
 
-    return pointerResultDTO;
-  }
-
-  private int getTotalScore(int totalScore) {
-    if (totalScore > MAX_SCORE) {
-      totalScore = MAX_SCORE;
-    }
-    return totalScore;
+    return new IndicatorScoreDTO(
+        "hypertension-risk",
+        "Ris. Hipertensão",
+        /* primary */ false,
+        total,
+        MAX_SCORE,
+        ranges,
+        Instant.now());
   }
 }

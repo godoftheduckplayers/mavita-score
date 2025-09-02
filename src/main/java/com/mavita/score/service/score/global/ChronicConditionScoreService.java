@@ -1,26 +1,30 @@
 package com.mavita.score.service.score.global;
 
 import com.mavita.score.exception.InvalidChronicConditionSelectionException;
-import com.mavita.score.service.score.global.dto.HealthDataDTO;
+import com.mavita.score.service.health.dto.HealthDTO;
+import com.mavita.score.service.profile.dto.ProfileDTO;
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
-import com.mavita.score.service.score.global.enums.ChronicCondition;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * ScoreService that calculates score based on reported chronic conditions.
+ * ScoreService that computes a score based on reported chronic conditions.
  *
- * <p>Scoring rules:
+ * <p>Input is taken from {@link String} (enum values). The rule is:
  *
  * <ul>
- *   <li>Each condition = 5 pts (excluding NONE)
- *   <li>If ONLY NONE is selected = 0 pts
+ *   <li>Each condition counts as 5 points (excluding {@code NONE});
+ *   <li>If {@code NONE} is selected alone, the score is 0;
+ *   <li>If {@code NONE} is combined with any other condition, an {@link
+ *       InvalidChronicConditionSelectionException} is thrown.
  * </ul>
  *
- * * Throws {@link InvalidChronicConditionSelectionException} if NONE is combined with any other
- * option.
+ * <p>The result is written into {@link HealthScoreSummaryDTO#setChronicConditionScore(int)}. This
+ * method performs no I/O and mutates the provided summary in place.
  *
- * @author Leandro Marques
+ * <p><b>Note:</b> {@link ProfileDTO} is part of the unified contract but not used in this rule.
+ *
  * @since 1.0.0
  */
 @Service
@@ -28,17 +32,29 @@ public class ChronicConditionScoreService implements ScoreService {
 
   @Override
   public void calculateScore(
-      HealthDataDTO healthDataDTO, HealthScoreSummaryDTO healthScoreSummaryDTO) {
-    List<ChronicCondition> conditions = healthDataDTO.chronicConditions();
-    int score = getScore(conditions);
+      ProfileDTO profileDTO, HealthDTO healthDTO, HealthScoreSummaryDTO healthScoreSummaryDTO) {
+
+    Objects.requireNonNull(profileDTO, "profileDTO must not be null");
+    Objects.requireNonNull(healthDTO, "healthDTO must not be null");
+    Objects.requireNonNull(healthScoreSummaryDTO, "healthScoreSummaryDTO must not be null");
+
+    final List<String> conditions = healthDTO.personalFamilyHistory().chronicConditions();
+
+    final int score = toChronicConditionScore(conditions);
     healthScoreSummaryDTO.setChronicConditionScore(score);
   }
 
-  private int getScore(List<ChronicCondition> conditions) {
-    if (conditions.contains(ChronicCondition.NONE) && conditions.size() > 1) {
+  private int toChronicConditionScore(List<String> conditions) {
+    if (conditions == null || conditions.isEmpty()) {
+      return 0;
+    }
+
+    final boolean hasNone = conditions.contains("NONE");
+    if (hasNone && conditions.size() > 1) {
       throw new InvalidChronicConditionSelectionException(
           "'NONE' must not be selected with other conditions");
     }
-    return (conditions.contains(ChronicCondition.NONE)) ? 0 : conditions.size() * 5;
+
+    return hasNone ? 0 : conditions.size() * 5;
   }
 }

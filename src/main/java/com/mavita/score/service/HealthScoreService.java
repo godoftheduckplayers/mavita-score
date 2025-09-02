@@ -1,48 +1,1 @@
-package com.mavita.score.service;
-
-import com.mavita.score.service.score.global.ScoreService;
-import com.mavita.score.service.score.global.dto.HealthDataDTO;
-import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
-import java.util.List;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-/**
- * Main service responsible for calculating the total health score.
- *
- * <p>This service delegates the calculation of individual score components (e.g., age, BMI, blood
- * pressure) to a list of {@link ScoreService} implementations. Each component is responsible for
- * evaluating a specific aspect of the user's health data.
- *
- * <p>The results from each {@code ScoreService} are accumulated into a single {@link
- * HealthScoreSummaryDTO}, which is returned as the final output.
- *
- * <p><b>Usage:</b>
- *
- * <pre>{@code
- * HealthScoreSummaryDTO summary = healthScoreService.calculateTotalScore(healthDataDTO);
- * }</pre>
- *
- * @author Leandro Marques
- * @since 1.0.0
- */
-@Service
-@RequiredArgsConstructor
-public class HealthScoreService {
-
-  private final List<ScoreService> components;
-
-  /**
-   * Calculates the total health score by applying each {@link ScoreService} to the input health
-   * data and aggregating their results into a summary DTO.
-   *
-   * @param healthDataDTO the input health data (must not be null)
-   * @return a {@link HealthScoreSummaryDTO} containing scores for all evaluated components
-   */
-  public HealthScoreSummaryDTO calculateTotalScore(HealthDataDTO healthDataDTO) {
-    HealthScoreSummaryDTO healthScoreSummaryDTO = new HealthScoreSummaryDTO();
-    components.forEach(
-        scoreService -> scoreService.calculateScore(healthDataDTO, healthScoreSummaryDTO));
-    return healthScoreSummaryDTO;
-  }
-}
+package com.mavita.score.service;import com.mavita.score.service.health.HealthService;import com.mavita.score.service.health.dto.HealthDTO;import com.mavita.score.service.profile.ProfileService;import com.mavita.score.service.profile.dto.ProfileDTO;import com.mavita.score.service.score.global.ScoreService;import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;import java.util.List;import java.util.Optional;import java.util.UUID;import lombok.RequiredArgsConstructor;import org.springframework.stereotype.Service;/** * Main service responsible for calculating the total health score for a given user. * * <p>Workflow: * * <ol> *   <li>Fetch the persisted <b>User Profile</b> and <b>Health</b> data using the provided {@code *       userUuid}. *   <li>Compose a single {@link HealthDTO} by merging the profile fields (birthDate, weight, *       height) and the health fields (lifestyle, sleep, mental health, family history, clinical *       signs, etc.). *   <li>Apply each {@link ScoreService} to the composed {@link HealthDTO}, aggregating results into *       a {@link HealthScoreSummaryDTO}. * </ol> * * <p>If either profile or health data is not found, only the available information is used. Fields * from the user profile (birthDate, weight, height) take precedence over the same fields in the * health data (if both exist). * * <p><b>Usage:</b> * * <pre>{@code * HealthScoreSummaryDTO summary = healthScoreService.calculateTotalScore(userUuid); * }</pre> * * @author Leandro * @since 1.0.0 */@Service@RequiredArgsConstructorpublic class HealthScoreService {  private final List<ScoreService> components;  private final ProfileService profileService;  private final HealthService healthService;  /**   * Calculates the total health score for the specified user by fetching profile and health data,   * composing a {@link HealthDTO}, and applying all score components.   *   * @param userUuid the user's UUID (must not be null/blank)   * @return a {@link HealthScoreSummaryDTO} containing scores for all evaluated components   */  public HealthScoreSummaryDTO calculateTotalScore(String userUuid) {    Optional<ProfileDTO> profileOpt = profileService.findById(UUID.fromString(userUuid));    Optional<HealthDTO> healthOpt = healthService.findById(UUID.fromString(userUuid));    HealthScoreSummaryDTO summary = new HealthScoreSummaryDTO();    if (profileOpt.isPresent() && healthOpt.isPresent()) {      components.forEach(c -> c.calculateScore(profileOpt.get(), healthOpt.get(), summary));      return summary;    }    return null;  }}

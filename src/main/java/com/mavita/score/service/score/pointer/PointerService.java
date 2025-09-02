@@ -1,36 +1,35 @@
 package com.mavita.score.service.score.pointer;
 
-import com.mavita.score.service.score.global.dto.HealthDataDTO;
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
-import com.mavita.score.service.score.pointer.dto.PointerResultDTO;
+import com.mavita.score.service.score.pointer.dto.IndicatorScoreDTO;
 
 /**
- * Interface for services that calculate grouped health indicator scores (pointers).
+ * Contract for services that build a single high-level (grouped) health indicator from already
+ * computed atomic domain scores.
  *
- * <p>Each implementation of this interface represents a specific health domain, such as general
- * health, sleep quality, physical activity, etc., and uses the provided {@link HealthDataDTO} to
- * compute a score and its corresponding classification.
+ * <p>Each implementation represents a specific indicator (e.g., General Health, Sleep Health,
+ * Mental Health) and derives an {@link IndicatorScoreDTO} by aggregating and/or weighting fields
+ * from {@link HealthScoreSummaryDTO}. Implementations must not return {@code null}.
  *
- * <p>This abstraction enables flexible use of multiple strategies through polymorphism or dynamic
- * resolution (e.g., using the Strategy pattern).
+ * <p>Typical usage:
  *
- * @author Leandro Marques
+ * <pre>{@code
+ * PointerService diabetesRisk = new DiabetesRiskPointerService();
+ * IndicatorScoreDTO indicator = diabetesRisk.calculate(summary);
+ * }</pre>
+ *
+ * <p>Implementations should be side effect free and thread-safe if shared.
+ *
  * @since 1.0.0
  */
 public interface PointerService {
 
   /**
-   * Calculates the general health pointer score by aggregating individual scores from the provided
-   * HealthScoreSummaryDTO record, and updates the given PointerResultDTO.
+   * Computes a single indicator score from the provided {@link HealthScoreSummaryDTO}.
    *
-   * <p>The method sums specific health domain scores according to predefined weights to produce an
-   * overall health indicator score.
-   *
-   * @param healthScoreSummaryDTO the record containing individual health domain scores (immutable)
-   * @param pointerResultDTO the result object to be updated with the calculated general health
-   *     score
-   * @return the updated PointerResultDTO containing the general health pointer score
+   * @param healthScoreSummaryDTO an immutable snapshot of atomic domain scores; must not be {@code
+   *     null}
+   * @return a non-{@code null} {@link IndicatorScoreDTO} representing the computed indicator
    */
-  PointerResultDTO calculate(
-      HealthScoreSummaryDTO healthScoreSummaryDTO, PointerResultDTO pointerResultDTO);
+  IndicatorScoreDTO calculate(HealthScoreSummaryDTO healthScoreSummaryDTO);
 }
