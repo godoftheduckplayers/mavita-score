@@ -35,6 +35,6 @@ public class DiabetesRiskPointerService implements PointerService {
             new IndicatorScoreDTO.Range(0, 7, "#D9534F", "alto risco"));
 
     return new IndicatorScoreDTO(
-        "diabetes-risk", "Risco de Diabetes", false, progress, MAX_SCORE, ranges, Instant.now());
+        "diabetes-risk", "Risco de Diabetes", false, 4, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

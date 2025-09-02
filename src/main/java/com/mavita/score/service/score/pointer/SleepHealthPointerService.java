@@ -54,6 +54,6 @@ public class SleepHealthPointerService implements PointerService {
             new IndicatorScoreDTO.Range(0, 5, "#D9534F", "sono ruim"));
 
     return new IndicatorScoreDTO(
-        "sleep-health", "Saúde do Sono", false, progress, MAX_SCORE, ranges, Instant.now());
+        "sleep-health", "Saúde do Sono", false, 2, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

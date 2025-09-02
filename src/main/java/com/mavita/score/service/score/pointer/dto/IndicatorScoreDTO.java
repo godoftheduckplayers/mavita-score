@@ -42,6 +42,7 @@ public record IndicatorScoreDTO(
     String id,
     String title,
     boolean primary,
+    int order,
     int score,
     int maxScore,
     List<Range> ranges,

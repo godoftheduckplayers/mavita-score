@@ -55,6 +55,6 @@ public class LifestyleRiskPointerService implements PointerService {
             new IndicatorScoreDTO.Range(0, 6, "#D9534F", "alto risco"));
 
     return new IndicatorScoreDTO(
-        "lifestyle-risk", "Estilo de Vida", false, progress, MAX_SCORE, ranges, Instant.now());
+        "lifestyle-risk", "Estilo de Vida", false, 6, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

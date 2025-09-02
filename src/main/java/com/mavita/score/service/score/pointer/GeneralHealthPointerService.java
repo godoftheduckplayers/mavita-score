@@ -54,6 +54,6 @@ public class GeneralHealthPointerService implements PointerService {
             new IndicatorScoreDTO.Range(0, 24, "#D9534F", "baixa saúde geral"));
 
     return new IndicatorScoreDTO(
-        "general-health", "Saúde Geral", true, progress, MAX_SCORE, ranges, Instant.now());
+        "general-health", "Saúde Geral", true, 0, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

@@ -56,6 +56,6 @@ public class ObesityRiskPointerService implements PointerService {
             new IndicatorScoreDTO.Range(0, 8, "#D9534F", "alto risco"));
 
     return new IndicatorScoreDTO(
-        "obesity-risk", "Risco de Obesidade", false, progress, MAX_SCORE, ranges, Instant.now());
+        "obesity-risk", "Risco de Obesidade", false, 3, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

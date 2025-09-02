@@ -53,6 +53,6 @@ public class MentalHealthPointerService implements PointerService {
             new IndicatorScoreDTO.Range(0, 4, "#D9534F", "alto risco emocional"));
 
     return new IndicatorScoreDTO(
-        "mental-health", "Saúde Mental", false, progress, MAX_SCORE, ranges, Instant.now());
+        "mental-health", "Saúde Mental", false, 1, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

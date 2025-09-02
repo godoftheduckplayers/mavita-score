@@ -54,6 +54,13 @@ public class HypertensionRiskPointerService implements PointerService {
             new IndicatorScoreDTO.Range(0, 6, "#D9534F", "alto risco"));
 
     return new IndicatorScoreDTO(
-        "hypertension-risk", "Ris. Hipertensão", false, progress, MAX_SCORE, ranges, Instant.now());
+        "hypertension-risk",
+        "Ris. Hipertensão",
+        false,
+        5,
+        progress,
+        MAX_SCORE,
+        ranges,
+        Instant.now());
   }
 }

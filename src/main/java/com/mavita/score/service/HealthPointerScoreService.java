@@ -3,6 +3,7 @@ package com.mavita.score.service;
 import com.mavita.score.service.score.global.dto.HealthScoreSummaryDTO;
 import com.mavita.score.service.score.pointer.PointerService;
 import com.mavita.score.service.score.pointer.dto.IndicatorScoreDTO;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -70,6 +71,7 @@ public class HealthPointerScoreService {
               }
             })
         .filter(Objects::nonNull)
+        .sorted(Comparator.comparingInt(IndicatorScoreDTO::order))
         .collect(Collectors.toList());
   }
 }
