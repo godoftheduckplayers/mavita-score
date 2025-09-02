@@ -8,9 +8,9 @@
         <version>3.5.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.mavita.score</groupId>
+    <groupId>com.mavita</groupId>
     <artifactId>score</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>score</name>
     <description>It ingests data, computes scores using configurable rules, classifies results into ranges (e.g.,
         low/medium/high), and stores history. Exposes REST APIs for calculation and retrieval, documented with
