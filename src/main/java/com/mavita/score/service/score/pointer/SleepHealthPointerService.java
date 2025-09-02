@@ -11,21 +11,18 @@ import org.springframework.stereotype.Service;
  * Builds the "Sleep Health" indicator from atomic sleep-related scores contained in {@link
  * HealthScoreSummaryDTO}.
  *
- * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
+ * <p><strong>Aggregation (risk points, capped at {@value #MAX_SCORE})</strong>: sleep hours + sleep
+ * difficulty + night awakenings + wake-up mood.
+ *
+ * <p><strong>Progress mapping</strong>: the gauge expects 0 = bad and MAX = good, so {@code
+ * progress = MAX - totalRisk}.
+ *
+ * <p><strong>Ranges (progress domain, MAX=16)</strong> mirrored from original risk bands:
  *
  * <ul>
- *   <li>Sleep hours score
- *   <li>Sleep difficulty score
- *   <li>Night awakening frequency score
- *   <li>Wake-up mood score
- * </ul>
- *
- * <p><strong>Ranges</strong> (0–16):
- *
- * <ul>
- *   <li>0–5: Bom
+ *   <li>11–16: Bom
  *   <li>6–10: Regular
- *   <li>11–16: Ruim
+ *   <li>0–5: Ruim
  * </ul>
  *
  * @since 1.0.0
@@ -45,22 +42,18 @@ public class SleepHealthPointerService implements PointerService {
             + summary.getNightAwakeningFrequencyScore()
             + summary.getWakeUpMoodScore();
 
-    if (total > MAX_SCORE) total = MAX_SCORE;
     if (total < 0) total = 0;
+    if (total > MAX_SCORE) total = MAX_SCORE;
+
+    int progress = MAX_SCORE - total;
 
     List<IndicatorScoreDTO.Range> ranges =
         List.of(
-            new IndicatorScoreDTO.Range(0, 5, "#5CB85C", "Bom"),
-            new IndicatorScoreDTO.Range(6, 10, "#F0AD4E", "Regular"),
-            new IndicatorScoreDTO.Range(11, 16, "#D9534F", "Ruim"));
+            new IndicatorScoreDTO.Range(11, 16, "#5CB85C", "sono bom"),
+            new IndicatorScoreDTO.Range(6, 10, "#F0AD4E", "sono regular"),
+            new IndicatorScoreDTO.Range(0, 5, "#D9534F", "sono ruim"));
 
     return new IndicatorScoreDTO(
-        "sleep-health",
-        "Saúde do Sono",
-        /* primary */ false,
-        total,
-        MAX_SCORE,
-        ranges,
-        Instant.now());
+        "sleep-health", "Saúde do Sono", false, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

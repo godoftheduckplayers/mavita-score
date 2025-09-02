@@ -11,20 +11,18 @@ import org.springframework.stereotype.Service;
  * Builds the "Mental Health" indicator from atomic domain scores contained in {@link
  * HealthScoreSummaryDTO}.
  *
- * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
+ * <p><strong>Aggregation (risk points, capped at {@value #MAX_SCORE})</strong>: anxiety/shortness
+ * of breath + stress level + sadness/low motivation.
+ *
+ * <p><strong>Progress mapping</strong>: the gauge expects 0=bad and MAX=good, so {@code progress =
+ * MAX - totalRisk}.
+ *
+ * <p><strong>Ranges (progress domain, MAX=12)</strong> (mirrored from the original risk ranges):
  *
  * <ul>
- *   <li>Anxiety / shortness of breath score
- *   <li>Stress level score
- *   <li>Sadness / low motivation score
- * </ul>
- *
- * <p><strong>Ranges</strong> (0–12):
- *
- * <ul>
- *   <li>0–3: Boa
- *   <li>4–7: Atenção
- *   <li>8–12: Alto risco emocional
+ *   <li>9–12: Boa
+ *   <li>5–8: Atenção
+ *   <li>0–4: Alto risco emocional
  * </ul>
  *
  * @since 1.0.0
@@ -43,22 +41,18 @@ public class MentalHealthPointerService implements PointerService {
             + summary.getStressLevelScore()
             + summary.getSadnessLevelScore();
 
-    if (total > MAX_SCORE) total = MAX_SCORE;
     if (total < 0) total = 0;
+    if (total > MAX_SCORE) total = MAX_SCORE;
+
+    int progress = MAX_SCORE - total;
 
     List<IndicatorScoreDTO.Range> ranges =
         List.of(
-            new IndicatorScoreDTO.Range(0, 3, "#5CB85C", "Boa"),
-            new IndicatorScoreDTO.Range(4, 7, "#F0AD4E", "Atenção"),
-            new IndicatorScoreDTO.Range(8, 12, "#D9534F", "Alto risco emocional"));
+            new IndicatorScoreDTO.Range(9, 12, "#5CB85C", "boa saúde mental"),
+            new IndicatorScoreDTO.Range(5, 8, "#F0AD4E", "atenção moderada"),
+            new IndicatorScoreDTO.Range(0, 4, "#D9534F", "alto risco emocional"));
 
     return new IndicatorScoreDTO(
-        "mental-health",
-        "Saúde Mental",
-        /* primary */ false,
-        total,
-        MAX_SCORE,
-        ranges,
-        Instant.now());
+        "mental-health", "Saúde Mental", false, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

@@ -8,25 +8,21 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
- * Builds the "Lifestyle Risk" indicator from atomic lifestyle-related domain scores contained in
- * {@link HealthScoreSummaryDTO}.
+ * Builds the "Lifestyle Risk" indicator from lifestyle-related domain scores in {@link
+ * HealthScoreSummaryDTO}.
  *
- * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
+ * <p><strong>Aggregation (risk points, capped at {@value #MAX_SCORE})</strong>: smoking + alcohol +
+ * physical activity + diet + sleep difficulty.
  *
- * <ul>
- *   <li>Smoking score
- *   <li>Alcohol consumption score
- *   <li>Physical activity score
- *   <li>Diet quality score
- *   <li>Sleep difficulty score
- * </ul>
+ * <p><strong>Progress mapping</strong>: the gauge expects 0=bad and MAX=good, so {@code progress =
+ * MAX - totalRisk}.
  *
- * <p><strong>Ranges</strong> (0–20):
+ * <p><strong>Ranges (progress domain, MAX=20)</strong> (mirrored from the original risk ranges):
  *
  * <ul>
- *   <li>0–6: Saudável
- *   <li>7–13: Moderado
- *   <li>14–20: Alto
+ *   <li>14–20: Saudável (green)
+ *   <li>7–13: Moderado (amber)
+ *   <li>0–6: Alto (red)
  * </ul>
  *
  * @since 1.0.0
@@ -47,22 +43,18 @@ public class LifestyleRiskPointerService implements PointerService {
             + summary.getDietScore()
             + summary.getSleepDifficultyScore();
 
-    if (total > MAX_SCORE) total = MAX_SCORE;
     if (total < 0) total = 0;
+    if (total > MAX_SCORE) total = MAX_SCORE;
+
+    int progress = MAX_SCORE - total;
 
     List<IndicatorScoreDTO.Range> ranges =
         List.of(
-            new IndicatorScoreDTO.Range(0, 6, "#5CB85C", "Saudável"),
-            new IndicatorScoreDTO.Range(7, 13, "#F0AD4E", "Moderado"),
-            new IndicatorScoreDTO.Range(14, 20, "#D9534F", "Alto"));
+            new IndicatorScoreDTO.Range(14, 20, "#5CB85C", "saudável"),
+            new IndicatorScoreDTO.Range(7, 13, "#F0AD4E", "moderado"),
+            new IndicatorScoreDTO.Range(0, 6, "#D9534F", "alto risco"));
 
     return new IndicatorScoreDTO(
-        "lifestyle-risk",
-        "Estilo de Vida",
-        /* primary */ false,
-        total,
-        MAX_SCORE,
-        ranges,
-        Instant.now());
+        "lifestyle-risk", "Estilo de Vida", false, progress, MAX_SCORE, ranges, Instant.now());
   }
 }

@@ -11,21 +11,18 @@ import org.springframework.stereotype.Service;
  * Builds the "Hypertension Risk" indicator from atomic domain scores contained in {@link
  * HealthScoreSummaryDTO}.
  *
- * <p><strong>Aggregation logic</strong> (capped at {@value #MAX_SCORE}):
+ * <p><strong>Aggregation (risk points, capped at {@value #MAX_SCORE})</strong>: alcohol consumption
+ * + headache/dizziness + personal chronic conditions + parental conditions.
+ *
+ * <p><strong>Progress mapping</strong>: the gauge expects 0=bad and MAX=good, so {@code progress =
+ * MAX - totalRisk}.
+ *
+ * <p><strong>Ranges (progress domain, MAX=18)</strong> (mirrored from the original risk ranges):
  *
  * <ul>
- *   <li>Alcohol consumption score
- *   <li>Headache / dizziness score
- *   <li>Personal chronic conditions score
- *   <li>Parental conditions score
- * </ul>
- *
- * <p><strong>Ranges</strong> (0–18):
- *
- * <ul>
- *   <li>0–4: Baixo
- *   <li>5–11: Moderado
- *   <li>12–18: Alto
+ *   <li>14–18: Baixo (green)
+ *   <li>7–13: Moderado (amber)
+ *   <li>0–6: Alto (red)
  * </ul>
  *
  * @since 1.0.0
@@ -45,22 +42,18 @@ public class HypertensionRiskPointerService implements PointerService {
             + summary.getChronicConditionScore()
             + summary.getParentalConditionsScore();
 
-    if (total > MAX_SCORE) total = MAX_SCORE;
     if (total < 0) total = 0;
+    if (total > MAX_SCORE) total = MAX_SCORE;
+
+    int progress = MAX_SCORE - total;
 
     List<IndicatorScoreDTO.Range> ranges =
         List.of(
-            new IndicatorScoreDTO.Range(0, 4, "#5CB85C", "Baixo"),
-            new IndicatorScoreDTO.Range(5, 11, "#F0AD4E", "Moderado"),
-            new IndicatorScoreDTO.Range(12, 18, "#D9534F", "Alto"));
+            new IndicatorScoreDTO.Range(14, 18, "#5CB85C", "baixo risco"),
+            new IndicatorScoreDTO.Range(7, 13, "#F0AD4E", "moderado"),
+            new IndicatorScoreDTO.Range(0, 6, "#D9534F", "alto risco"));
 
     return new IndicatorScoreDTO(
-        "hypertension-risk",
-        "Ris. Hipertensão",
-        /* primary */ false,
-        total,
-        MAX_SCORE,
-        ranges,
-        Instant.now());
+        "hypertension-risk", "Ris. Hipertensão", false, progress, MAX_SCORE, ranges, Instant.now());
   }
 }
