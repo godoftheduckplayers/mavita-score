@@ -84,7 +84,6 @@ public class ScoreController {
   @GetMapping
   public ResponseEntity<List<IndicatorScoreDTO>> getCurrentScore(
       @RequestHeader("Authorization") String authorization) {
-    System.out.println(authorization);
     return JwtUtils.extractSub(authorization)
         .map(userUuid -> ResponseEntity.ok(service.calculateTotalScore(userUuid)))
         .orElseGet(() -> ResponseEntity.notFound().build());
